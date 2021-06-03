@@ -54,3 +54,6 @@ candidate_sites <- left_join(data_avail, parm_key, by = c("parm_cd" = "parameter
          site_no != "05599490") %>%
   arrange(site_no) %>%
   select(station_nm, site_no, `00060`, `00010`, `99133`, everything())
+
+# NOAA Site Selection-----------------------------------------------------------
+
