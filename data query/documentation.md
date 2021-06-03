@@ -6,7 +6,7 @@ Data were retrieved from the USGS National Water Information System (NWIS) datas
 
 All 50 states were screened for sites possessing daily measurements (`service = 'dv'`) of mean (`statCd = "00003"`) nitrate/nitrite concentration values (`parmCd = "99133"`). This returned 132 sites. From these, sites not appearing on a list of delineated watersheds provided by Galen were removed. This left 48 sites with delineated watersheds. Sites with fewer than 1000 days of discharge data, or fewer than 500 days of any of the six other variables of interest (listed below) were removed, leaving 14 sites. Of these, 10 were in the Midwest ([part numbers](https://help.waterdata.usgs.gov/faq/sites/do-station-numbers-have-any-particular-meaning) 03 through 06), whereas 4 were around the East Coast (part numbers 01 and 02). We chose to initially focus on sites in the Midwest. Lastly, one of these 10 sites (USGS ID: 05599490) was removed because it had its catchment delineated in a separate USGS dataset and thus lacked some attributes calculated for the other 9.
 
-### NWIS variables (and parameter codes)
+### Hydrologic variables (and NWIS parameter codes)
 
 - Discharge (00060)
 - Water temperature (00010)
@@ -16,11 +16,17 @@ All 50 states were screened for sites possessing daily measurements (`service = 
 - pH (00400)
 - Turbidity (63680)
 
+## NWIS Data Query and Gap Filling
+
+Across the 9 sites, the earliest 'dv' data availability of water chemistry variables was around 2014. Data was queried from 2010 onwards to provide sufficient discharge history for our lookback.
+
+Discharge and water temperature are the only two hydrologic variables that we carried out gap filling for.
+
 ## GHCND Site Selection
 
-All NOAA stations with data collected before 2010 and after 2019 for one or more variables of interest (listed below) were considered eligible.
+All GHCND stations with data collected before 2010 and after 2019 for one or more variables of interest (listed below) were considered eligible. For each of the 9 NWIS sites, meteorological data were retrieved from the nearest eligible GHCND site.
 
-### NOAA GHCND variables (and abbreviations)
+### meteorological variables (and GHCND abbreviations)
 
 - Precipitation (PRCP)
 - Snow (SNOW)
