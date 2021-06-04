@@ -20,7 +20,11 @@ All 50 states were screened for sites possessing daily measurements (`service = 
 
 Across the 9 sites, the earliest 'dv' data availability of water chemistry variables was around 2014. Data was queried from 2010 onwards to provide sufficient discharge history for our lookback.
 
-Discharge and water temperature are the only two hydrologic variables that we carried out gap filling for.
+Discharge and water temperature are the only two hydrologic variables that we gap-filled. Water chemistry variables are considered response variables for the time being, and response variables don't necessarily have to be continuous for an LSTM.
+
+### Discharge
+
+### Water Temperature 
 
 ## GHCND Site Selection
 

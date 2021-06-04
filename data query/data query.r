@@ -86,7 +86,21 @@ nwis_tidy <- nwis_data %>%
 
 # NWIS Gap Filling--------------------------------------------------------------
 
-nwis_tidy
+### Plot
+
+nwis_tidy %>%
+  pivot_longer(cols = water_temp:nitrate) %>%
+  mutate(facet = paste(site_no, name)) %>%
+  filter(value > -1000, name %in% c("water_temp", "discharge")) %>%
+  ggplot(aes(x = Date, y = value)) +
+  geom_point() +
+  facet_wrap(~facet, scales = "free_y", ncol = 4)
+
+### Fill discharge gaps
+
+### Fill water temperature gaps
+
+### Plot gap-filled data
 
 # NOAA Site Selection-----------------------------------------------------------
 
