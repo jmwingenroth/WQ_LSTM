@@ -28,7 +28,7 @@ Data coverage for discharge was very good: only 9 missing days between 2010-01-0
 
 ### Water Temperature 
 
-Water temperature had many more gaps, some of which were several months in length. We will need to revisit how to fill these gaps, but for now, I filled 7-day-or-shorter gaps with linear interpolation. Longer gaps were filled day-wise with the average of all values collected at that site on that day of the year. These two measures combined filled all gaps, though it should be noted that it filled them all the way from 2010 to the first measured value with a repeating seasonal pattern.
+Water temperature had many more gaps, some of which were several months in length. __We will need to revisit how to fill these gaps__, but for now, I filled 7-day-or-shorter gaps with linear interpolation. Longer gaps were filled day-wise with the average of all values collected at that site on that day of the year. These two measures combined filled all gaps, though it should be noted that it filled them all the way from 2010 to the first measured value with a repeating seasonal pattern.
 
 ## GHCND Site Selection
 

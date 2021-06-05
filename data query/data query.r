@@ -172,6 +172,9 @@ nwis_filled %>%
              aes(xintercept = Date), color = "red") +
   scale_color_manual(values = c("red", "black"))
 
+# If you've made it this far, let's tidy up before diving into the GHCND data!
+rm(candidates_lengths, data_avail, nitr_delin, nitrate_sites, nwis_data, nwis_tidy, parm_key)
+
 # NOAA Site Selection-----------------------------------------------------------
 
 ghcnd_sites <- ghcnd_stations() %>%
@@ -182,29 +185,4 @@ ghcnd_sites <- ghcnd_stations() %>%
          latitude < 45,
          longitude > -95,
          longitude < -85)
-
-candidates_meta <- whatNWISsites(siteNumbers = candidates_lengths$site_no)
-
-nearest_sites <- list()
-
-# https://www.r-bloggers.com/2010/11/great-circle-distance-calculations-in-r/
-# Calculates the geodesic distance between two lat/long points using the
-# Spherical Law of Cosines (slc)
-gcd.slc <- function(long1, lat1, long2, lat2) {
-  R <- 6371 # Earth mean radius [km]
-  p <- pi/180
-  d <- acos(sin(lat1*p)*sin(lat2*p) + cos(lat1*p)*cos(lat2*p) * cos(long2*p-long1*p)) * R
-  return(d) # Distance in km
-}
-
-for (i in 1:nrow(usgs_sites)) {
-  
-  noaa_sites[[i]] <- station_data %>%
-    filter((latitude - usgs_sites$dec_lat_va[i])^2 + 
-             (longitude - usgs_sites$dec_long_va[i])^2 == 
-             min((latitude - usgs_sites$dec_lat_va[i])^2 +
-                   (longitude - usgs_sites$dec_long_va[i])^2)) %>%
-    mutate(approx_dist = gcd.slc(longitude, latitude, usgs_sites$dec_long_va[i], usgs_sites$dec_lat_va[i]))
-  
-}
 
