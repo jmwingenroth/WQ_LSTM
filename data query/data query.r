@@ -175,14 +175,41 @@ nwis_filled %>%
 # If you've made it this far, let's tidy up before diving into the GHCND data!
 rm(candidates_lengths, data_avail, nitr_delin, nitrate_sites, nwis_data, nwis_tidy, parm_key)
 
-# NOAA Site Selection-----------------------------------------------------------
+# GHCND Site Selection----------------------------------------------------------
+
+meteo_vars <- c("PRCP", "SNOW", "SNWD", "TMAX", "TMIN")
 
 ghcnd_sites <- ghcnd_stations() %>%
   filter(first_year < 2010, 
          last_year > 2019, 
-         element %in% c("PRCP", "SNOW", "SNWD", "TMAX", "TMIN"),
+         element %in% meteo_vars,
          latitude > 35,
          latitude < 45,
          longitude > -95,
          longitude < -85)
+
+nearby_sites <- list()
+
+# https://www.r-bloggers.com/2010/11/great-circle-distance-calculations-in-r/
+# Calculates the geodesic distance between two points specified by radian latitude/longitude using the
+# Spherical Law of Cosines (slc)
+gcd.slc <- function(long1, lat1, long2, lat2) {
+  R <- 6371 # Earth mean radius [km]
+  p <- pi/180
+  d <- acos(sin(lat1*p)*sin(lat2*p) + cos(lat1*p)*cos(lat2*p) * cos(long2*p-long1*p)) * R
+  return(d) # Distance in km
+}
+
+for (i in 1:nrow(candidates_meta)) {
+  
+  nearby_sites[[i]] <- ghcnd_sites %>%
+    filter((latitude - candidates_meta$dec_lat_va[i])^2 + (longitude - candidates_meta$dec_long_va[i])^2 < 0.1) %>%
+    mutate(approx_dist = gcd.slc(longitude, latitude, candidates_meta$dec_long_va[i], candidates_meta$dec_lat_va[i])) %>%
+    arrange(approx_dist)
+  
+}
+
+# GHCND Iterative Data Query and Gap Filling------------------------------------
+
+# 3 columns per var: value, site ID, distance
 
