@@ -2,6 +2,8 @@
 
 This folder should contain a script titled `data_query.r`, which selects sites, queries and downloads data, tidies and joins, and fills gaps. Other files in this folder may include quantitative analyses of the outputs of `data_query.r`.
 
+There are many ways this code could be made more efficient and straightforward. I left in some steps from our very first stages that run *super* slow (like hitting NWIS with 50 queries to cover all states since their server requires a spatial boundary). Now that we've got a Git repo, we can edit those parts out to make things run smoother and still be able to refer to them in the commit history if need be.
+
 ## Data Sources 
 
 Data were retrieved from the USGS National Water Information System (NWIS) dataset using the `dataRetrieval` package and from the NOAA Global Historical Climate Network Daily (GHCND) dataset using the `rnoaa` package (both are R packages).
@@ -52,4 +54,4 @@ Note: TMAX and TMIN were chosen over TAVG as they are available for many more si
 
 For each NWIS site x day, the average of all measured values at GHCND sites in the ellipse described above were averaged. This was initially implemented as a simple arithmetic average, but an inverse-distance-weighting function might be good to include in the future. This yielded very good coverage. SNWD had 87 remaining missing values, all others had fewer than 20, and PRCP had 0. For SNWD, TMAX, and TMIN, these values were filled with the same linear interpolation as the hydrologic variables. For SNOW (and PRCP in case missing values appear in future data downloads), they were filled with zeros (n = 18 out of 37,548), since we don't expect precipitation to be as autocorrelated day to day as temperature or snow accumulation.
 
-There were two gaps for snow depth that were longer than 7 days, in May and July 2011, surrounded by zeroes on both sides. I upped the threshold for linear interpolation to 21 days to effectively zero these out.
+There were two gaps for snow depth that were longer than 7 days, in May and July 2011, surrounded by zeroes on both sides. I upped the threshold for linear interpolation to 21 days to effectively zero these out. I also noticed upon further review that all of the interpolated SNWD, TMAX, and TMIN values were at one site (05595000).

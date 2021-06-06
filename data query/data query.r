@@ -3,19 +3,22 @@ library(rnoaa) # NOAA GHCND meteorological data queries
 library(dataRetrieval) # USGS NWIS hydrologic data queries
 library(baytrends) # interpolation
 
-end_date <- "2021-06-02" # how recent we want to collect data up to. Probably best to leave out the past few days, maybe more.
+end_date <- "2021-06-02" # most recent date we want to analyze. Probably best to leave out at least the past few days, maybe more.
 
 # NWIS Site Selection-----------------------------------------------------------
 
-US_states <- c("AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-               "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-               "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-               "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-               "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY")
+US_states <- c(#"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  #"HI", "ID", 
+  "IL", "IN", "IA", #"KS", "KY", "LA", "ME", "MD",
+  #"MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  #"NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  #"SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", 
+  "WI"#, "WY"
+)
 
 nitrate_sites <- list()
 
-for (i in 1:50) {
+for (i in 1:length(US_states)) {
   try(nitrate_sites[[i]] <- whatNWISdata(stateCd = US_states[i], 
                                          service = "dv", 
                                          statCd = "00003", 
@@ -61,19 +64,16 @@ candidates_lengths <- left_join(data_avail, parm_key, by = c("parm_cd" = "parame
 candidates_meta <- whatNWISsites(siteNumbers = candidates_lengths$site_no)
 
 nwis_data <- readNWISdv(siteNumbers = candidates_meta$site_no, 
-           parameterCd = c("00060",
-                           "99133",
-                           "00010",
-                           "00095",
-                           "00300",
-                           "00400",
-                           "63680"), 
-           statCd = c("00003", "00008"), 
-           startDate = "2010-01-01",
-           endDate = end_date)
-
-nwis_data %>%
-  filter((is.na(X_.YSI._63680_00003) + is.na(X_.YSI._63680_00003) + is.na(X_.HACH._63680_00003)) < 2)
+                        parameterCd = c("00060",
+                                        "99133",
+                                        "00010",
+                                        "00095",
+                                        "00300",
+                                        "00400",
+                                        "63680"), 
+                        statCd = c("00003", "00008"), 
+                        startDate = "2010-01-01",
+                        endDate = end_date)
 
 nwis_tidy <- nwis_data %>%
   select(-contains("cd")) %>%
@@ -134,8 +134,8 @@ nwis_tidy <- nwis_tidy %>%
 
 nwis_tidy <- nwis_tidy %>%
   mutate(water_temp_interp = if_else(is.na(water_temp),
-                                    true = "linear",
-                                    false = "raw")) %>%
+                                     true = "linear",
+                                     false = "raw")) %>%
   
   # same as for discharge
   mutate(water_temp = fillMissing(water_temp, span = 1, max.fill = 7))
@@ -150,7 +150,7 @@ nwis_filled <- nwis_tidy %>%
   mutate(water_temp_interp = if_else(water_temp_interp == "linear" & is.na(water_temp),
                                      true = "seasonal",
                                      false = water_temp_interp)) %>%
-
+  
   mutate(water_temp = if_else(is.na(water_temp),
                               true = mean(water_temp, na.rm = TRUE),
                               false = water_temp))
@@ -163,7 +163,7 @@ if (sum(is.na(nwis_filled$discharge)) + sum(is.na(nwis_filled$water_temp)) == 0)
 nwis_filled %>%
   filter(Date > "2014-06-01") %>%
   ggplot(aes(x = Date, y = water_temp, color = water_temp_interp)) +
-  geom_point() +
+  geom_point(alpha = .3) +
   facet_wrap(~site_no)
 
 nwis_filled %>%
@@ -245,8 +245,8 @@ ghcnd_tidy <- ghcnd_tidy %>%
 
 ghcnd_tidy <- ghcnd_tidy %>%
   mutate(across(c(snwd,tmax,tmin), list(interp = function(x) if_else(is.na(x),
-                                                             "spatiotemporal",
-                                                             "spatial"))))
+                                                                     "spatiotemporal",
+                                                                     "spatial"))))
 
 ghcnd_tidy <- ghcnd_tidy %>%
   mutate(across(c(prcp,snow), function(x) if_else(is.na(x),
@@ -259,5 +259,20 @@ ghcnd_filled <- ghcnd_tidy %>%
 ### Check continuity
 if (sum(is.na(ghcnd_filled)) == 0) cat("Data filled successfully")
 
-
 ### Plot gap-filled data
+
+plots <- list()
+
+for (i in 1:length(meteo_vars)) {
+  
+plots[[i]] <- ghcnd_filled %>%
+    ggplot(aes_string(x = "date", y = tolower(meteo_vars)[i], color = paste0(tolower(meteo_vars)[i],"_interp"))) +
+    geom_point(alpha = .3) +
+    facet_wrap(~nwis_site)
+  
+}
+
+# Save Filled Data--------------------------------------------------------------
+
+write_csv(ghcnd_filled, "data query/meteo_filled.csv")
+write_csv(nwis_filled,  "data query/hydro_filled.csv")
