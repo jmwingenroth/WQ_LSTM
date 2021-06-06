@@ -3,6 +3,8 @@ library(rnoaa) # NOAA GHCND meteorological data queries
 library(dataRetrieval) # USGS NWIS hydrologic data queries
 library(baytrends) # interpolation
 
+end_date <- "2021-06-02" # how recent we want to collect data up to. Probably best to leave out the past few days, maybe more.
+
 # NWIS Site Selection-----------------------------------------------------------
 
 US_states <- c("AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
@@ -68,7 +70,7 @@ nwis_data <- readNWISdv(siteNumbers = candidates_meta$site_no,
                            "63680"), 
            statCd = c("00003", "00008"), 
            startDate = "2010-01-01",
-           endDate = Sys.Date() - 2) #to avoid NA values when remote dataset updates
+           endDate = end_date)
 
 nwis_data %>%
   filter((is.na(X_.YSI._63680_00003) + is.na(X_.YSI._63680_00003) + is.na(X_.HACH._63680_00003)) < 2)
@@ -153,7 +155,7 @@ nwis_filled <- nwis_tidy %>%
                               true = mean(water_temp, na.rm = TRUE),
                               false = water_temp))
 
-# Check continuity
+### Check continuity
 if (sum(is.na(nwis_filled$discharge)) + sum(is.na(nwis_filled$water_temp)) == 0) cat("Data filled successfully")
 
 ### Plot gap-filled data
@@ -173,7 +175,7 @@ nwis_filled %>%
   scale_color_manual(values = c("red", "black"))
 
 # If you've made it this far, let's tidy up before diving into the GHCND data!
-rm(candidates_lengths, data_avail, nitr_delin, nitrate_sites, nwis_data, nwis_tidy, parm_key)
+# rm(candidates_lengths, data_avail, nitr_delin, nitrate_sites, nwis_data, nwis_tidy, parm_key) # maybe include in final version, currently left out for debugging
 
 # GHCND Site Selection----------------------------------------------------------
 
@@ -217,92 +219,45 @@ ghcnd_ids <- bind_rows(nearby_sites) %>%
 
 ghcnd_data <- meteo_pull_monitors(ghcnd_ids, 
                                   date_min = "2010-01-01",
-                                  date_max = Sys.Date() - 2,
+                                  date_max = end_date,
                                   var = meteo_vars)
 
-# GHCND Gap Filling-------------------------------------------------------------
-
-### 3 columns per var.: value, interpolation method, site
-
-meteo_vars_lc <- tolower(meteo_vars)
+# GHCND Spatial Averaging-------------------------------------------------------
 
 big_ghcnd <- left_join(ghcnd_data, bind_rows(nearby_sites), by = "id") %>%
   distinct(id, date, prcp, snow, snwd, tmax, tmin, latitude, longitude, approx_dist, nwis_site)
 
-all_filled <- left_join(nwis_filled, big_ghcnd, by = c("site_no" = "nwis_site", "Date" = "date")) %>%
-  group_by(site_no, Date) %>%
-  filter(approx_dist == min(approx_dist)) %>%
-  ungroup() 
+ghcnd_tidy <- big_ghcnd %>%
+  group_by(nwis_site, date) %>%
+  arrange(nwis_site, date) %>%
+  summarise(across(prcp:tmin, function(x) mean(x, na.rm = TRUE)))
 
-all_filled <-all_filled %>%
-  mutate(prcp_id = id,
-         prcp_interp = "raw",
-         snow_id = id,
-         snow_interp = "raw",
-         snwd_id = id,
-         snwd_interp = "raw",
-         tmax_id = id,
-         tmax_interp = "raw",
-         tmin_id = id,
-         tmin_interp = "raw") %>%
-  rename(near_id = id, near_dist = approx_dist) # it's straightforward to get distances for other GHCND sites from `big_ghcnd` (filter by `nwis_site` and the site id in question)
+ghcnd_tidy %>%
+  mutate(gap = date - lag(date) - 1) %>%
+  summarise(max(gap, na.rm = TRUE))
 
-### tmin
+# GHCND Gap Filling-------------------------------------------------------------
 
-# I had some trouble vectorizing/looping over variable names, so I resorted to find & replace. 
-# As a sanity check for the find/replace, the variable name currently occurs 20 times.
+ghcnd_tidy <- ghcnd_tidy %>%
+  mutate(across(c(prcp,snow), list(interp = function(x) if_else(is.na(x),
+                                                                "zeroed",
+                                                                "spatial"))))
 
-sum(is.na(all_filled$tmin)) # sanity checks
+ghcnd_tidy <- ghcnd_tidy %>%
+  mutate(across(c(snwd,tmax,tmin), list(interp = function(x) if_else(is.na(x),
+                                                             "spatiotemporal",
+                                                             "spatial"))))
 
-all_filled <- all_filled %>%
-  mutate(tmin_interp = if_else(is.na(tmin),
-                               true = "linear_raw",
-                               false = "raw")) %>%
-  
-  group_by(site_no) %>%
-  
-  # same as for discharge
-  mutate(tmin = fillMissing(tmin, span = 1, max.fill = 7))
+ghcnd_tidy <- ghcnd_tidy %>%
+  mutate(across(c(prcp,snow), function(x) if_else(is.na(x),
+                                                  0,
+                                                  x)))
 
-sum(is.na(all_filled$tmin)) # sanity checks
+ghcnd_filled <- ghcnd_tidy %>%
+  mutate(across(c(snwd,tmax,tmin), ~fillMissing(.x, span = 1, max.fill = 21)))
 
-all_filled <- all_filled %>%
-  mutate(tmin_interp = if_else(is.na(tmin),
-                               true = "next_nearest",
-                               false = tmin_interp))
-
-for (i in which(is.na(all_filled$tmin))) {
-  
-  temp <- big_ghcnd %>%
-    filter(nwis_site == all_filled$site_no[i],
-           !is.na(tmin),
-           date == all_filled$Date[i]) %>%
-    filter(approx_dist == min(approx_dist))
-  
-  all_filled$tmin[i] <- ifelse(nrow(temp) > 0,
-                               temp$tmin,
-                               NA)
-  
-  all_filled$tmin_id[i] <- ifelse(nrow(temp) > 0,
-                                  temp$id,
-                                  NA)
-  
-}
-
-sum(is.na(all_filled$tmin)) # sanity checks
-
-all_filled <- all_filled %>%
-  mutate(tmin_interp = if_else(is.na(tmin),
-                               true = "linear_all",
-                               false = tmin_interp)) %>%
-  
-  group_by(site_no) %>%
-  
-  # same as for discharge
-  mutate(tmin = fillMissing(tmin, span = 1, max.fill = 7))
-
-all_filled %>%
-  group_by(tmin_interp) %>%
-  summarise(n = n())
+### Check continuity
+if (sum(is.na(ghcnd_filled)) == 0) cat("Data filled successfully")
 
 
+### Plot gap-filled data

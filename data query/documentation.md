@@ -1,3 +1,7 @@
+# data_query.r
+
+This folder should contain a script titled `data_query.r`, which selects sites, queries and downloads data, tidies and joins, and fills gaps. Other files in this folder may include quantitative analyses of the outputs of `data_query.r`.
+
 ## Data Sources 
 
 Data were retrieved from the USGS National Water Information System (NWIS) dataset using the `dataRetrieval` package and from the NOAA Global Historical Climate Network Daily (GHCND) dataset using the `rnoaa` package (both are R packages).
@@ -32,7 +36,7 @@ Water temperature had many more gaps, some of which were several months in lengt
 
 ## GHCND Site Selection and Data Query
 
-For each of the 9 NWIS sites, a list of all GHCND sites collecting one or more variables of interest (listed below) within a geographic projected ellipse (Δlat^2 + Δlon^2 < 0.2) was formed and the approximate distance (km) to the corresponding NWIS site was calculated. This includes sites up to 40-50 km from the NWIS site. Data were pulled from all of these sites from 2010-01-01 to near the present (currently results in a little over half a million GHCND site x day rows).
+For each of the 9 NWIS sites, a list of all GHCND sites collecting one or more variables of interest (listed below) within a geographic projected ellipse (Δlat^2 + Δlon^2 < R^2) was formed and the approximate distance (km) to the corresponding NWIS site was calculated. As currently parameterized (R^2 = 0.2), this includes sites up to 50 km from the NWIS site. Data were pulled from all of these sites from 2010-01-01 to near the present (currently results in a little over half a million GHCND site x day rows).
 
 ### Meteorological variables (and GHCND abbreviations)
 
@@ -44,14 +48,8 @@ For each of the 9 NWIS sites, a list of all GHCND sites collecting one or more v
 
 Note: TMAX and TMIN were chosen over TAVG as they are available for many more sites.
 
-## GHCND Gap Filling
+## GHCND Spatial Averaging and Gap Filling
 
-TMIN, TMAX, and SNWD were filled according to the following protocol:
+For each NWIS site x day, the average of all measured values at GHCND sites in the ellipse described above were averaged. This was initially implemented as a simple arithmetic average, but an inverse-distance-weighting function might be good to include in the future. This yielded very good coverage. SNWD had 87 remaining missing values, all others had fewer than 20, and PRCP had 0. For SNWD, TMAX, and TMIN, these values were filled with the same linear interpolation as the hydrologic variables. For SNOW (and PRCP in case missing values appear in future data downloads), they were filled with zeros (n = 18 out of 37,548), since we don't expect precipitation to be as autocorrelated day to day as temperature or snow accumulation.
 
-1. Raw data from the nearest site to each NWIS site were joined to the NWIS data by date.
-2. The same linear interpolation method used for NWIS variables was applied.
-3. For remaining missing values, the GHCND data was queried for the nearest non-missing measurement for that NWIS site and date (computationally intensive)
-4. If gaps remained, the linear interpolation method was applied again.
-5. __(HAVEN'T NEEDED THIS YET)__ Last resort: seasonal method as was used for water temperature.
-
-For PRCP and SNOW, the linear interpolation step was left out. I reason that these variables differ from the other three in that one day's value is not nearly as predictive as the next. We'll jump straight to the next-nearest-site-method. This comes at a price in terms of computation but these variables tended to have more data at the nearest site, which my code currently joins efficiently, so it works out OK. 
+There were two gaps for snow depth that were longer than 7 days, in May and July 2011, surrounded by zeroes on both sides. I upped the threshold for linear interpolation to 21 days to effectively zero these out.
