@@ -247,151 +247,62 @@ all_filled <-all_filled %>%
          tmin_interp = "raw") %>%
   rename(near_id = id, near_dist = approx_dist) # it's straightforward to get distances for other GHCND sites from `big_ghcnd` (filter by `nwis_site` and the site id in question)
 
-### prcp
-# I had some trouble vectorizing over the column names (`meteo_vars_lc`), so I resorted to find & replace. This should probably be improved to make sure our protocol stays consistent across variables.
-# This would also shrink the code length by about 200 lines.
+### tmin
 
-sum(is.na(all_filled$prcp)) # sanity checks
+# I had some trouble vectorizing/looping over variable names, so I resorted to find & replace. 
+# As a sanity check for the find/replace, the variable name currently occurs 20 times.
 
-all_filled <- all_filled %>%
-  mutate(prcp_interp = if_else(is.na(prcp),
-                                    true = "linear",
-                                    false = "raw")) %>%
-  
-  group_by(site_no) %>%
-  
-  # same as for discharge
-  mutate(prcp = fillMissing(prcp, span = 1, max.fill = 7))
-
-sum(is.na(all_filled$prcp)) # sanity checks
+sum(is.na(all_filled$tmin)) # sanity checks
 
 all_filled <- all_filled %>%
-  mutate(prcp_interp = if_else(is.na(prcp),
-                               true = "next_nearest",
-                               false = prcp_interp))
-
-for (i in which(is.na(all_filled$prcp))) {
-  
-  temp <- big_ghcnd %>%
-    filter(nwis_site == all_filled$site_no[i],
-           !is.na(prcp),
-           date == all_filled$Date[i]) %>%
-    filter(approx_dist == min(approx_dist))
-  
-  all_filled$prcp[i] <- ifelse(nrow(temp) > 0,
-                               temp$prcp,
-                               NA)
-  
-  all_filled$prcp_id[i] <- ifelse(nrow(temp) > 0,
-                               temp$id,
-                               all_filled$prcp_id[i])
-
-}
-
-sum(is.na(all_filled$prcp)) # sanity checks
-
-temp <- filter(all_filled, prcp_interp != "next_nearest")
-
-sum(temp$near_id != temp$prcp_id)
-
-all_filled %>%
-  group_by(prcp_interp) %>%
-  summarise(n = n())
-
-### snow
-
-sum(is.na(all_filled$snow)) # sanity checks
-
-all_filled <- all_filled %>%
-  mutate(snow_interp = if_else(is.na(snow),
-                               true = "linear",
+  mutate(tmin_interp = if_else(is.na(tmin),
+                               true = "linear_raw",
                                false = "raw")) %>%
   
   group_by(site_no) %>%
   
   # same as for discharge
-  mutate(snow = fillMissing(snow, span = 1, max.fill = 7))
+  mutate(tmin = fillMissing(tmin, span = 1, max.fill = 7))
 
-sum(is.na(all_filled$snow)) # sanity checks
+sum(is.na(all_filled$tmin)) # sanity checks
 
 all_filled <- all_filled %>%
-  mutate(snow_interp = if_else(is.na(snow),
+  mutate(tmin_interp = if_else(is.na(tmin),
                                true = "next_nearest",
-                               false = snow_interp))
+                               false = tmin_interp))
 
-for (i in which(is.na(all_filled$snow))) {
+for (i in which(is.na(all_filled$tmin))) {
   
   temp <- big_ghcnd %>%
     filter(nwis_site == all_filled$site_no[i],
-           !is.na(snow),
+           !is.na(tmin),
            date == all_filled$Date[i]) %>%
     filter(approx_dist == min(approx_dist))
   
-  all_filled$snow[i] <- ifelse(nrow(temp) > 0,
-                               temp$snow,
+  all_filled$tmin[i] <- ifelse(nrow(temp) > 0,
+                               temp$tmin,
                                NA)
   
-  all_filled$snow_id[i] <- ifelse(nrow(temp) > 0,
+  all_filled$tmin_id[i] <- ifelse(nrow(temp) > 0,
                                   temp$id,
-                                  all_filled$snow_id[i])
+                                  NA)
   
 }
 
-sum(is.na(all_filled$snow)) # sanity checks
-
-temp <- filter(all_filled, snow_interp != "next_nearest")
-
-sum(temp$near_id != temp$snow_id)
-
-all_filled %>%
-  group_by(snow_interp) %>%
-  summarise(n = n())
-
-### snwd
-
-sum(is.na(all_filled$snwd)) # sanity checks
+sum(is.na(all_filled$tmin)) # sanity checks
 
 all_filled <- all_filled %>%
-  mutate(snwd_interp = if_else(is.na(snwd),
-                               true = "linear",
-                               false = "raw")) %>%
+  mutate(tmin_interp = if_else(is.na(tmin),
+                               true = "linear_all",
+                               false = tmin_interp)) %>%
   
   group_by(site_no) %>%
   
   # same as for discharge
-  mutate(snwd = fillMissing(snwd, span = 1, max.fill = 7))
-
-sum(is.na(all_filled$snwd)) # sanity checks
-
-all_filled <- all_filled %>%
-  mutate(snwd_interp = if_else(is.na(snwd),
-                               true = "next_nearest",
-                               false = snwd_interp))
-
-for (i in which(is.na(all_filled$snwd))) {
-  
-  temp <- big_ghcnd %>%
-    filter(nwis_site == all_filled$site_no[i],
-           !is.na(snwd),
-           date == all_filled$Date[i]) %>%
-    filter(approx_dist == min(approx_dist))
-  
-  all_filled$snwd[i] <- ifelse(nrow(temp) > 0,
-                               temp$snwd,
-                               NA)
-  
-  all_filled$snwd_id[i] <- ifelse(nrow(temp) > 0,
-                                  temp$id,
-                                  all_filled$snwd_id[i])
-  
-}
-
-sum(is.na(all_filled$snwd)) # sanity checks
-
-temp <- filter(all_filled, snwd_interp != "next_nearest")
-
-sum(temp$near_id != temp$snwd_id)
+  mutate(tmin = fillMissing(tmin, span = 1, max.fill = 7))
 
 all_filled %>%
-  group_by(snwd_interp) %>%
+  group_by(tmin_interp) %>%
   summarise(n = n())
+
+

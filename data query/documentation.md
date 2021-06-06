@@ -32,7 +32,7 @@ Water temperature had many more gaps, some of which were several months in lengt
 
 ## GHCND Site Selection and Data Query
 
-For each of the 9 NWIS sites, a list of all GHCND sites collecting one or more variables of interest (listed below) within a geographic projected ellipse (Δlat^2 + Δlon^2 < 0.2) was formed and the approximate distance (km) to the corresponding NWIS site was calculated. Data were pulled from all of these sites from 2010-01-01 to near the present (currently results in a little over half a million GHCND site x day rows).
+For each of the 9 NWIS sites, a list of all GHCND sites collecting one or more variables of interest (listed below) within a geographic projected ellipse (Δlat^2 + Δlon^2 < 0.2) was formed and the approximate distance (km) to the corresponding NWIS site was calculated. This includes sites up to 40-50 km from the NWIS site. Data were pulled from all of these sites from 2010-01-01 to near the present (currently results in a little over half a million GHCND site x day rows).
 
 ### Meteorological variables (and GHCND abbreviations)
 
@@ -46,10 +46,12 @@ Note: TMAX and TMIN were chosen over TAVG as they are available for many more si
 
 ## GHCND Gap Filling
 
-The five meteorological variables were filled according to the following protocol:
+TMIN, TMAX, and SNWD were filled according to the following protocol:
 
 1. Raw data from the nearest site to each NWIS site were joined to the NWIS data by date.
 2. The same linear interpolation method used for NWIS variables was applied.
 3. For remaining missing values, the GHCND data was queried for the nearest non-missing measurement for that NWIS site and date (computationally intensive)
 4. If gaps remained, the linear interpolation method was applied again.
-5. __(HAVEN'T NEEDED THIS YET)__ Last resort: seasonal method like for water temperature.
+5. __(HAVEN'T NEEDED THIS YET)__ Last resort: seasonal method as was used for water temperature.
+
+For PRCP and SNOW, the linear interpolation step was left out. I reason that these variables differ from the other three in that one day's value is not nearly as predictive as the next. We'll jump straight to the next-nearest-site-method. This comes at a price in terms of computation but these variables tended to have more data at the nearest site, which my code currently joins efficiently, so it works out OK. 
