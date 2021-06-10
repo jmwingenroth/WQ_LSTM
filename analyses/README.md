@@ -12,3 +12,5 @@
 | `spatiotemporal` | gaps in GHCND data filled by linear interpolation along time | 
 
 See the README.md in `download/` for more information about gap-filling methods.
+
+`coverage_plots.r` plots data with interpolation manner highlighted.
