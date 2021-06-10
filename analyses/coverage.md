@@ -1,34 +1,65 @@
-|discharge_interp | count|    percent|
-|:----------------|-----:|----------:|
-|linear           |     9|  0.0239751|
-|raw              | 37530| 99.9760249|
-
-|water_temp_interp | count|    percent|
-|:-----------------|-----:|----------:|
-|linear            |   323|  0.8604385|
-|raw               | 16322| 43.4801140|
-|seasonal          | 20894| 55.6594475|
-
-|prcp_interp | count| percent|
-|:-----------|-----:|-------:|
-|spatial     | 37539|     100|
-
-|snow_interp | count|    percent|
-|:-----------|-----:|----------:|
-|spatial     | 37521| 99.9520499|
-|zeroed      |    18|  0.0479501|
-
-|snwd_interp    | count|   percent|
-|:--------------|-----:|---------:|
-|spatial        | 37452| 99.768241|
-|spatiotemporal |    87|  0.231759|
-
-|tmax_interp    | count|    percent|
-|:--------------|-----:|----------:|
-|spatial        | 37537| 99.9946722|
-|spatiotemporal |     2|  0.0053278|
-
-|tmin_interp    | count|    percent|
-|:--------------|-----:|----------:|
-|spatial        | 37537| 99.9946722|
-|spatiotemporal |     2|  0.0053278|
+|Site     |Variable   | Present (%)| Linear (%)| Seasonal (%)|
+|:--------|:----------|-----------:|----------:|------------:|
+|03339000 |discharge  |       100.0|        0.0|           NA|
+|         |prcp       |       100.0|        0.0|           NA|
+|         |snow       |       100.0|        0.0|           NA|
+|         |snwd       |       100.0|        0.0|           NA|
+|         |tmax       |       100.0|        0.0|           NA|
+|         |tmin       |       100.0|        0.0|           NA|
+|         |water_temp |        40.7|        2.4|         56.9|
+|03346500 |discharge  |       100.0|        0.0|           NA|
+|         |prcp       |       100.0|        0.0|           NA|
+|         |snow       |       100.0|        0.0|           NA|
+|         |snwd       |       100.0|        0.0|           NA|
+|         |tmax       |       100.0|        0.0|           NA|
+|         |tmin       |       100.0|        0.0|           NA|
+|         |water_temp |        49.3|        0.6|         50.1|
+|05446500 |discharge  |       100.0|        0.0|           NA|
+|         |prcp       |       100.0|        0.0|           NA|
+|         |snow       |       100.0|        0.0|           NA|
+|         |snwd       |       100.0|        0.0|           NA|
+|         |tmax       |       100.0|        0.0|           NA|
+|         |tmin       |       100.0|        0.0|           NA|
+|         |water_temp |        34.3|        0.4|         65.3|
+|05447500 |discharge  |       100.0|        0.0|           NA|
+|         |prcp       |       100.0|        0.0|           NA|
+|         |snow       |       100.0|        0.0|           NA|
+|         |snwd       |       100.0|        0.0|           NA|
+|         |tmax       |       100.0|        0.0|           NA|
+|         |tmin       |       100.0|        0.0|           NA|
+|         |water_temp |        36.8|        0.6|         62.6|
+|05515500 |discharge  |       100.0|        0.0|           NA|
+|         |prcp       |       100.0|        0.0|           NA|
+|         |snow       |       100.0|        0.0|           NA|
+|         |snwd       |       100.0|        0.0|           NA|
+|         |tmax       |       100.0|        0.0|           NA|
+|         |tmin       |       100.0|        0.0|           NA|
+|         |water_temp |        57.2|        1.5|         41.4|
+|05517500 |discharge  |       100.0|        0.0|           NA|
+|         |prcp       |       100.0|        0.0|           NA|
+|         |snow       |       100.0|        0.0|           NA|
+|         |snwd       |       100.0|        0.0|           NA|
+|         |tmax       |       100.0|        0.0|           NA|
+|         |tmin       |       100.0|        0.0|           NA|
+|         |water_temp |        38.0|        0.4|         61.7|
+|05518000 |discharge  |       100.0|        0.0|           NA|
+|         |prcp       |       100.0|        0.0|           NA|
+|         |snow       |       100.0|        0.0|           NA|
+|         |snwd       |       100.0|        0.0|           NA|
+|         |tmax       |       100.0|        0.0|           NA|
+|         |tmin       |       100.0|        0.0|           NA|
+|         |water_temp |        39.7|        0.4|         59.9|
+|05524500 |discharge  |        99.8|        0.2|           NA|
+|         |prcp       |       100.0|        0.0|           NA|
+|         |snow       |       100.0|        0.0|           NA|
+|         |snwd       |       100.0|        0.0|           NA|
+|         |tmax       |       100.0|        0.0|           NA|
+|         |tmin       |       100.0|        0.0|           NA|
+|         |water_temp |        46.7|        0.7|         52.6|
+|05595000 |discharge  |       100.0|        0.0|           NA|
+|         |prcp       |       100.0|        0.0|           NA|
+|         |snow       |        99.6|        0.4|           NA|
+|         |snwd       |        97.9|        2.1|           NA|
+|         |tmax       |       100.0|        0.0|           NA|
+|         |tmin       |       100.0|        0.0|           NA|
+|         |water_temp |        48.8|        0.9|         50.4|

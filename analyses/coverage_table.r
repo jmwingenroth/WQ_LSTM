@@ -8,18 +8,24 @@ joined <- cbind(hydro, meteo) %>%
   select(-date, -nwis_site) %>%
   tibble()
 
-interp <- joined[str_detect(names(joined), "interp")]
+table <- joined %>%
+  pivot_longer(cols = contains("interp"), names_to = "variable", values_to = "interpolation") %>%
+  mutate(variable = str_sub(variable,,-8)) %>%
+  group_by(site_no, variable, interpolation) %>%
+  summarise(n = n()) %>%
+  pivot_wider(names_from = interpolation, values_from = n) %>%
+  ungroup() %>%
+  rowwise() %>%
+  transmute(Site = site_no, 
+            Variable = variable,
+            datespan = as.numeric(max(joined$Date) - min(joined$Date) + 1),
+            "Present (%)"  = 100*sum(raw, spatial, na.rm = TRUE)/datespan,
+            "Linear (%)"   = 100*sum(linear, spatiotemporal, zeroed, na.rm = TRUE)/datespan,
+            "Seasonal (%)" = 100*seasonal/datespan) %>%
+  replace_na(replace = list(Zeros = 0, Seasonal = 0)) %>%
+  mutate(across(contains("%"), function (x) round(x, digits = 1))) %>%
+  select(-datespan)
 
-groups <- lapply(colnames(interp), as.symbol)
+table$Site[duplicated(table$Site)] <- ""
 
-tables <- list()
-
-for (i in 1:length(groups)) {
-  
-  tables[[i]] <- interp %>%
-    group_by_(.dots = groups[i]) %>%
-    summarise(count = n(), percent = 100*n()/nrow(interp))
-  
-}
-
-writeLines(kable(tables), con = "analyses/coverage.md")
+writeLines(kable(table), con = "analyses/coverage.md")
