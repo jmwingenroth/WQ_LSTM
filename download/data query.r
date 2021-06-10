@@ -158,25 +158,6 @@ nwis_filled <- nwis_tidy %>%
 ### Check continuity
 if (sum(is.na(nwis_filled$discharge)) + sum(is.na(nwis_filled$water_temp)) == 0) cat("Data filled successfully")
 
-### Plot gap-filled data
-
-nwis_filled %>%
-  filter(Date > "2014-06-01") %>%
-  ggplot(aes(x = Date, y = water_temp, color = water_temp_interp)) +
-  geom_point(alpha = .3) +
-  facet_wrap(~site_no)
-
-nwis_filled %>%
-  ggplot(aes(x = Date, y = discharge, color = discharge_interp)) +
-  geom_point() +
-  facet_wrap(~site_no) +
-  geom_vline(data = filter(nwis_filled, discharge_interp == "linear"),
-             aes(xintercept = Date), color = "red") +
-  scale_color_manual(values = c("red", "black"))
-
-# If you've made it this far, let's tidy up before diving into the GHCND data!
-# rm(candidates_lengths, data_avail, nitr_delin, nitrate_sites, nwis_data, nwis_tidy, parm_key) # maybe include in final version, currently left out for debugging
-
 # GHCND Site Selection----------------------------------------------------------
 
 meteo_vars <- c("PRCP", "SNOW", "SNWD", "TMAX", "TMIN")
@@ -258,19 +239,6 @@ ghcnd_filled <- ghcnd_tidy %>%
 
 ### Check continuity
 if (sum(is.na(ghcnd_filled)) == 0) cat("Data filled successfully")
-
-### Plot gap-filled data
-
-plots <- list()
-
-for (i in 1:length(meteo_vars)) {
-  
-plots[[i]] <- ghcnd_filled %>%
-    ggplot(aes_string(x = "date", y = tolower(meteo_vars)[i], color = paste0(tolower(meteo_vars)[i],"_interp"))) +
-    geom_point(alpha = .3) +
-    facet_wrap(~nwis_site)
-  
-}
 
 # Save Filled Data--------------------------------------------------------------
 
