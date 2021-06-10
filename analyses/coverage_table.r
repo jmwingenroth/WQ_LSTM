@@ -23,7 +23,7 @@ table <- joined %>%
             "Linear (%)"   = 100*sum(linear, spatiotemporal, zeroed, na.rm = TRUE)/datespan,
             "Seasonal (%)" = 100*seasonal/datespan) %>%
   replace_na(replace = list("Seasonal (%)" = 0)) %>%
-  mutate(across(contains("%"), function (x) round(x, digits = 1))) %>%
+  mutate(across(contains("%"), function (x) round(x, digits = 2))) %>%
   select(-datespan)
 
 table$Site[duplicated(table$Site)] <- ""
