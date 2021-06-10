@@ -22,7 +22,7 @@ table <- joined %>%
             "Present (%)"  = 100*sum(raw, spatial, na.rm = TRUE)/datespan,
             "Linear (%)"   = 100*sum(linear, spatiotemporal, zeroed, na.rm = TRUE)/datespan,
             "Seasonal (%)" = 100*seasonal/datespan) %>%
-  replace_na(replace = list(Zeros = 0, Seasonal = 0)) %>%
+  replace_na(replace = list("Seasonal (%)" = 0)) %>%
   mutate(across(contains("%"), function (x) round(x, digits = 1))) %>%
   select(-datespan)
 
