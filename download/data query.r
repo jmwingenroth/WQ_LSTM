@@ -254,7 +254,6 @@ air_temp_filled <- ghcnd_tidy %>%
   mutate(across(c(tmax,tmin), ~fillMissing(.x, span = 1, max.fill = 21))) %>%
   bind_cols(nwis_tidy) %>%
   select(nwis_site, date, tmin, tmax, tmin_interp, tmax_interp, prcp, snow, snwd,
-         discharge, water_temp, spec_cond, dissolv_O, pH, turbidity, nitrate) %>%
-  summarise(across(prcp:nitrate, function(x) sum(is.na(x))))
+         discharge, water_temp, spec_cond, dissolv_O, pH, turbidity, nitrate) 
 
-write_csv(air_temp_filled, "download/air_temp_filled.csv")
+write_csv(air_temp_filled, "download/misc/air_temp_filled.csv")
