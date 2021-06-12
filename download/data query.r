@@ -32,7 +32,7 @@ nitrate_sites <- nitrate_sites[lapply(nitrate_sites, nrow) > 0]
 nitrate_sites <- lapply(nitrate_sites, function(x) select(x, -alt_acy_va)) %>%
   bind_rows()
 
-nitr_delin <- read_csv("data query/delineated_sites.csv") %>% # file contains ~19,000 delineated watersheds
+nitr_delin <- read_csv("download/delineated_sites.csv") %>% # file contains ~19,000 delineated watersheds
   right_join(nitrate_sites, by = c("SITE_NO" = "site_no")) %>%
   filter(!is.na(SQMI))
 
@@ -122,7 +122,7 @@ nwis_tidy %>%
 
 ### Fill discharge gaps
 
-nwis_tidy <- nwis_tidy %>%
+nwis_filled <- nwis_tidy %>%
   mutate(discharge_interp = if_else(is.na(discharge),
                                     true = "linear",
                                     false = "raw")) %>%
@@ -132,7 +132,7 @@ nwis_tidy <- nwis_tidy %>%
 
 ### Fill water temperature gaps
 
-nwis_tidy <- nwis_tidy %>%
+nwis_filled <- nwis_filled %>%
   mutate(water_temp_interp = if_else(is.na(water_temp),
                                      true = "linear",
                                      false = "raw")) %>%
@@ -142,10 +142,10 @@ nwis_tidy <- nwis_tidy %>%
 
 # Now there are some NA values marked linear, to be interpolated by seasonal pattern 
 
-nwis_tidy <- nwis_tidy %>%
+nwis_filled <- nwis_filled %>%
   mutate(julian = as.numeric(format(Date, "%j"))) 
 
-nwis_filled <- nwis_tidy %>%
+nwis_filled <- nwis_filled %>%
   group_by(julian, .add = TRUE) %>%
   mutate(water_temp_interp = if_else(water_temp_interp == "linear" & is.na(water_temp),
                                      true = "seasonal",
@@ -219,22 +219,22 @@ ghcnd_tidy %>%
 
 # GHCND Gap Filling-------------------------------------------------------------
 
-ghcnd_tidy <- ghcnd_tidy %>%
+ghcnd_filled <- ghcnd_tidy %>%
   mutate(across(c(prcp,snow), list(interp = function(x) if_else(is.na(x),
                                                                 "zeroed",
                                                                 "spatial"))))
 
-ghcnd_tidy <- ghcnd_tidy %>%
+ghcnd_filled <- ghcnd_filled %>%
   mutate(across(c(snwd,tmax,tmin), list(interp = function(x) if_else(is.na(x),
                                                                      "spatiotemporal",
                                                                      "spatial"))))
 
-ghcnd_tidy <- ghcnd_tidy %>%
+ghcnd_filled <- ghcnd_filled %>%
   mutate(across(c(prcp,snow), function(x) if_else(is.na(x),
                                                   0,
                                                   x)))
 
-ghcnd_filled <- ghcnd_tidy %>%
+ghcnd_filled <- ghcnd_filled %>%
   mutate(across(c(snwd,tmax,tmin), ~fillMissing(.x, span = 1, max.fill = 21)))
 
 ### Check continuity
@@ -242,5 +242,19 @@ if (sum(is.na(ghcnd_filled)) == 0) cat("Data filled successfully")
 
 # Save Filled Data--------------------------------------------------------------
 
-write_csv(ghcnd_filled, "data query/meteo_filled.csv")
-write_csv(nwis_filled,  "data query/hydro_filled.csv")
+write_csv(ghcnd_filled, "download/meteo_filled.csv")
+write_csv(nwis_filled,  "download/hydro_filled.csv")
+
+# Version With Only TMIN and TMAX Filled (as requested by Galen)----------------
+
+air_temp_filled <- ghcnd_tidy %>%
+  mutate(across(c(tmax,tmin), list(interp = function(x) if_else(is.na(x),
+                                                                     "spatiotemporal",
+                                                                     "spatial")))) %>%
+  mutate(across(c(tmax,tmin), ~fillMissing(.x, span = 1, max.fill = 21))) %>%
+  bind_cols(nwis_tidy) %>%
+  select(nwis_site, date, tmin, tmax, tmin_interp, tmax_interp, prcp, snow, snwd,
+         discharge, water_temp, spec_cond, dissolv_O, pH, turbidity, nitrate) %>%
+  summarise(across(prcp:nitrate, function(x) sum(is.na(x))))
+
+write_csv(air_temp_filled, "download/air_temp_filled.csv")
