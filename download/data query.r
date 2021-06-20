@@ -195,7 +195,9 @@ for (i in 1:nrow(candidates_meta)) {
 
 # GHCND Data Query--------------------------------------------------------------
 
-ghcnd_ids <- bind_rows(nearby_sites) %>%
+nearby_sites <- bind_rows(nearby_sites)
+
+ghcnd_ids <- nearby_sites %>%
   distinct(id) %>% .$id
 
 ghcnd_data <- meteo_pull_monitors(ghcnd_ids, 
@@ -205,13 +207,22 @@ ghcnd_data <- meteo_pull_monitors(ghcnd_ids,
 
 # GHCND Spatial Averaging-------------------------------------------------------
 
-big_ghcnd <- left_join(ghcnd_data, bind_rows(nearby_sites), by = "id") %>%
+idw_power <- 10
+
+big_ghcnd <- left_join(ghcnd_data, nearby_sites, by = "id") %>%
   distinct(id, date, prcp, snow, snwd, tmax, tmin, latitude, longitude, approx_dist, nwis_site)
 
 ghcnd_tidy <- big_ghcnd %>%
   group_by(nwis_site, date) %>%
   arrange(nwis_site, date) %>%
-  summarise(across(prcp:tmin, function(x) mean(x, na.rm = TRUE)))
+  mutate(rel_weight = approx_dist^-idw_power)
+
+ghcnd_tidy <- summarise(ghcnd_tidy, 
+                        prcp = weighted.mean(prcp, rel_weight, na.rm = TRUE),
+                        snow = weighted.mean(snow, rel_weight, na.rm = TRUE),
+                        snwd = weighted.mean(snwd, rel_weight, na.rm = TRUE),
+                        tmin = weighted.mean(tmin, rel_weight, na.rm = TRUE),
+                        tmax = weighted.mean(tmax, rel_weight, na.rm = TRUE))
 
 ghcnd_tidy %>%
   mutate(gap = date - lag(date) - 1) %>%
@@ -242,8 +253,8 @@ if (sum(is.na(ghcnd_filled)) == 0) cat("Data filled successfully")
 
 # Save Filled Data--------------------------------------------------------------
 
-write_csv(ghcnd_filled, "download/meteo_filled.csv")
-write_csv(nwis_filled,  "download/hydro_filled.csv")
+write_csv(ghcnd_filled, "download/meteo_filled_idw10.csv")
+write_csv(nwis_filled,  "download/hydro_filled_idw10.csv")
 
 # Version With Only TMIN and TMAX Filled (as requested by Galen)----------------
 
