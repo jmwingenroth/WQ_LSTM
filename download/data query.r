@@ -254,7 +254,7 @@ if (sum(is.na(ghcnd_filled)) == 0) cat("Data filled successfully")
 # Save Filled Data--------------------------------------------------------------
 
 write_csv(ghcnd_filled, "download/meteo_filled_idw10.csv")
-write_csv(nwis_filled,  "download/hydro_filled_idw10.csv")
+write_csv(nwis_filled,  "download/hydro_filled.csv")
 
 # Version With Only TMIN and TMAX Filled (as requested by Galen)----------------
 
