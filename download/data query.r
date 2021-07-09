@@ -63,6 +63,8 @@ candidates_lengths <- left_join(data_avail, parm_key, by = c("parm_cd" = "parame
 
 candidates_meta <- whatNWISsites(siteNumbers = candidates_lengths$site_no)
 
+write_csv(candidates_meta, "download/site_list.csv")
+
 nwis_data <- readNWISdv(siteNumbers = candidates_meta$site_no, 
                         parameterCd = c("00060",
                                         "99133",
