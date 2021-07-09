@@ -28,6 +28,6 @@ for (i in 1:length(vars)) {
     facet_wrap(~site_no, scales = "free_y") +
     scale_size_manual(values = c("linear" = 3, "raw" = .5, "seasonal" = 1, "zeroed" = 3, "spatial" = .5, "spatiotemporal" = 3))
   
-  ggsave(paste0("analyses/",vars[i],".png"), plots[[i]], dpi = 100, width = 9, height = 7)
+  ggsave(paste0("analyses/coverage_plots/",vars[i],".png"), plots[[i]], dpi = 100, width = 9, height = 7)
   
 }
