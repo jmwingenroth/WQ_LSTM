@@ -1,5 +1,6 @@
 library(tidyverse)
 library(rnoaa) # NOAA GHCND meteorological data queries
+library(baytrends) # interpolation
 
 end_date <- "2021-06-02" # most recent date we want to analyze. Probably best to leave out at least the past few days, maybe more.
 
@@ -52,3 +53,53 @@ ghcnd_data <- meteo_pull_monitors(ghcnd_ids,
                                   date_max = end_date,
                                   var = meteo_vars)
 
+# GHCND Spatial Averaging-------------------------------------------------------
+
+idw_power <- seq(0, 30, by = .5)
+
+ghcnd_tidy <- list()
+
+big_ghcnd <- left_join(ghcnd_data, nearby_sites, by = "id") %>%
+  distinct(id, date, prcp, snow, snwd, tmax, tmin, latitude, longitude, approx_dist, nwis_site)
+
+for (i in 1:length(idw_power)) {
+  
+  ghcnd_tidy[[i]] <- big_ghcnd %>%
+    group_by(nwis_site, date) %>%
+    arrange(nwis_site, date) %>%
+    mutate(rel_weight = approx_dist^-idw_power[i]) %>%
+    summarise(prcp = weighted.mean(prcp, rel_weight, na.rm = TRUE),
+              snow = weighted.mean(snow, rel_weight, na.rm = TRUE),
+              snwd = weighted.mean(snwd, rel_weight, na.rm = TRUE),
+              tmin = weighted.mean(tmin, rel_weight, na.rm = TRUE),
+              tmax = weighted.mean(tmax, rel_weight, na.rm = TRUE)) %>%
+    mutate(idw_power = idw_power[i])
+  
+}
+  
+# GHCND Gap Filling-------------------------------------------------------------
+
+for (i in 1:length(idw_power)) { # length(ghcnd_tidy)==length(idw_power)
+  
+  ghcnd_tidy[[i]] <- ghcnd_tidy[[i]] %>%
+    mutate(across(c(prcp,snow), function(x) if_else(is.na(x),
+                                                    0,
+                                                    x))) %>%
+    mutate(across(c(snwd,tmax,tmin), ~fillMissing(.x, span = 1, max.fill = 21)))
+  
+  if (sum(is.na(ghcnd_tidy[[i]])) == 0) cat("Data filled successfully for idw_power =",idw_power[i],"\n")
+  
+}
+
+# IDW Comparison----------------------------------------------------------------
+
+ghcnd_tidy2 <- bind_rows(ghcnd_tidy)
+
+ghcnd_tidy2 %>%
+  filter(nwis_site == "03346500") %>%
+  ggplot(aes(x = date, y = prcp, color = idw_power)) +
+  geom_line(alpha = .1) +
+  scale_color_viridis_c() +
+  scale_x_date(limits = as.Date(c("2015-06-01",
+                                  "2015-09-01"))) +
+  ggtitle(label = "Site 03346500: July 2015 Precipitation")
